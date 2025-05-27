@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Worker Management</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    body {
+      background-color: #f5f7ff;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 20px;
+    }
+    .app-container {
+      display: flex;
+    }
+    .content-area {
+      flex: 1;
+      padding: 20px;
+    }
+
+    .worker-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .worker-table th, .worker-table td {
+      padding: 15px;
+      text-align: left;
+      border: 1px solid #dee2e6;
+    }
+
+    .worker-table th {
+      background-color: #4361ee;
+      color: white;
+    }
+
+    .edit-button, .add-button, .submit-button {
+      padding: 5px 10px;
+      background-color: #4cc9f0;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 5px;
+    }
+
+    .edit-form, .add-form {
+      margin-top: 20px;
+      display: none;
+    }
+
+    .edit-form input, .add-form input {
+      padding: 10px;
+      margin-bottom: 10px;
+      width: 100%;
+      border: 1px solid #dee2e6;
+      border-radius: 5px;
+    }
+
+    .search-container {
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .search-container input {
+      padding: 10px;
+      border: 1px solid #dee2e6;
+      border-radius: 5px;
+      flex: 1;
+    }
+
+    .search-container button {
+      padding: 10px;
+      background-color: #4361ee;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+
+    .add-worker-button {
+      background-color: #4cc9f0;
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+      cursor: pointer;
+    }
+
+    .add-worker-button i {
+      margin-right: 5px;
+    }
+  </style>
+</head>
+<body>
+<div class="app-container">
+  <nav class="side-menu">
+    <div class="menu-header">
+      <h2>Navigation</h2>
+    </div>
+    <ul class="menu-items">
+      <li><a href="home.html" class="menu-item active">Home</a></li>
+      <li><a href="products.html" class="menu-item">View Products</a></li>
+      <li><a href="add-product.html" class="menu-item">Add Product</a></li>
+      <li><a href="recent.html" class="menu-item">Recently Viewed</a></li>
+      <li><a href="history.html" class="menu-item">View History</a></li>
+      <li><a href="zone-management.html" class="menu-item">Zone Management</a></li>
+      <li><a href="settings.html" class="menu-item">Settings</a></li>
+    </ul>
+  </nav>
+
+  <main class="content-area">
+    <h1>Manage Workers</h1>
+
+    <div class="search-container">
+      <input type="text" id="search-input" placeholder="Search workers..." />
+      <button onclick="searchWorkers()"><i class="fas fa-search"></i> Search</button>
+    </div>
+
+    <div class="add-worker-button" onclick="toggleAddForm()">
+      <i class="fas fa-plus"></i> Add New Worker
+    </div>
+
+    <table class="worker-table">
+      <thead>
+      <tr>
+        <th>Name</th>
+        <th>Zones</th>
+        <th>Action</th>
+      </tr>
+      </thead>
+      <tbody id="worker-list">
+      <tr>
+        <td>John Doe</td>
+        <td>Zone A, Zone B</td>
+        <td><button class="edit-button" onclick="editWorker('John Doe', ['Zone A', 'Zone B'])"><i class="fas fa-edit"></i> Edit</button></td>
+      </tr>
+      <tr>
+        <td>Jane Smith</td>
+        <td>Zone B</td>
+        <td><button class="edit-button" onclick="editWorker('Jane Smith', ['Zone B'])"><i class="fas fa-edit"></i> Edit</button></td>
+      </tr>
+      <!-- Add more workers as needed -->
+      </tbody>
+    </table>
+
+    <div class="edit-form" id="edit-form">
+      <h2>Edit Worker</h2>
+      <input type="text" id="worker-name" placeholder="Worker Name" />
+      <div>
+        <label><input type="checkbox" value="Zone A"> Zone A</label>
+        <label><input type="checkbox" value="Zone B"> Zone B</label>
+        <label><input type="checkbox" value="Zone C"> Zone C</label>
+        <label><input type="checkbox" value="Zone D"> Zone D</label>
+      </div>
+      <button class="submit-button" onclick="saveWorker()">Save</button>
+    </div>
+
+    <div class="add-form" id="add-form">
+      <h2>Add New Worker</h2>
+      <input type="text" id="new-worker-name" placeholder="Worker Name" />
+      <div>
+        <label><input type="checkbox" value="Zone A"> Zone A</label>
+        <label><input type="checkbox" value="Zone B"> Zone B</label>
+        <label><input type="checkbox" value="Zone C"> Zone C</label>
+        <label><input type="checkbox" value="Zone D"> Zone D</label>
+      </div>
+      <button class="submit-button" onclick="addWorker()">Add Worker</button>
+    </div>
+  </main>
+</div>
+
+<script>
+  let currentWorker = '';
+
+  function editWorker(name, zones) {
+    currentWorker = name;
+    document.getElementById('worker-name').value = name;
+
+    const checkboxes = document.querySelectorAll('#edit-form input[type="checkbox"]');
+    checkboxes.forEach(checkbox => {
+      checkbox.checked = zones.includes(checkbox.value);
+    });
+
+    document.getElementById('edit-form').style.display = 'block';
+  }
+
+  function saveWorker() {
+    const newName = document.getElementById('worker-name').value;
+    const checkboxes = document.querySelectorAll('#edit-form input[type="checkbox"]');
+    const selectedZones = Array.from(checkboxes).filter(checkbox => checkbox.checked).map(checkbox => checkbox.value);
+    // Logic to save the updated worker information could go here
+    console.log(`Worker updated: ${currentWorker} to ${newName} in ${selectedZones.join(', ')}`);
+    alert(`Worker updated: ${currentWorker} to ${newName} in ${selectedZones.join(', ')}`);
+    document.getElementById('edit-form').style.display = 'none';
+  }
+
+  function toggleAddForm() {
+    const form = document.getElementById('add-form');
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+  }
+
+  function addWorker() {
+    const newWorkerName = document.getElementById('new-worker-name').value;
+    const checkboxes = document.querySelectorAll('#add-form input[type="checkbox"]');
+    const selectedZones = Array.from(checkboxes).filter(checkbox => checkbox.checked).map(checkbox => checkbox.value);
+    const workerList = document.getElementById('worker-list');
+
+    const newRow = document.createElement('tr');
+    newRow.innerHTML = `
+            <td>${newWorkerName}</td>
+            <td>${selectedZones.join(', ')}</td>
+            <td><button class="edit-button" onclick="editWorker('${newWorkerName}', ${JSON.stringify(selectedZones)})"><i class="fas fa-edit"></i> Edit</button></td>
+        `;
+    workerList.appendChild(newRow);
+
+    alert(`Worker ${newWorkerName} added in ${selectedZones.join(', ')}`);
+    document.getElementById('add-form').style.display = 'none';
+    document.getElementById('new-worker-name').value = '';
+    checkboxes.forEach(checkbox => checkbox.checked = false); // Reset checkboxes
+  }
+
+  function searchWorkers() {
+    const searchTerm = document.getElementById('search-input').value.toLowerCase();
+    const rows = document.querySelectorAll('#worker-list tr');
+
+    rows.forEach(row => {
+      const name = row.cells[0].textContent.toLowerCase();
+      const zones = row.cells[1].textContent.toLowerCase();
+      row.style.display = name.includes(searchTerm) || zones.includes(searchTerm) ? '' : 'none';
+    });
+  }
+</script>
+</body>
+</html>
