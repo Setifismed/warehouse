@@ -256,7 +256,7 @@ include('../include/pgsql_connection.php');
                         <th>ID</th>
                         <th>Date</th>
                         <th>Heure Creation</th>
-                        <th>Heure Début</th>
+                        <th>Heure DÃ©but</th>
                         <th>Statut</th>
                         <th>Actions</th>
                     </tr>
@@ -300,7 +300,7 @@ include('../include/pgsql_connection.php');
                         echo '</tr>';
                     }
                 } else {
-                    echo '<tr><td colspan="6" class="text-center text-muted">Aucun ordre trouvé.</td></tr>';
+                    echo '<tr><td colspan="6" class="text-center text-muted">Aucun ordre trouvÃ©.</td></tr>';
                 }
                 ?>
                 </tbody>
@@ -324,83 +324,410 @@ include('../include/pgsql_connection.php');
 </div>
 
 <script>
-  let timerInterval = null;
-let startTime = null;
-let currentOrderId = null;
+    let timerInterval = null;
+    let startTime = null;
+    let currentOrderId = null;
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Order Management Setup
-    setupViewButtons();
-    setupModalClose();
-    setupRefreshButton();
-    updateDateTime();
-    setInterval(updateDateTime, 1000);
+    document.addEventListener('DOMContentLoaded', function() {
+        // View button click handlers
+        setupViewButtons();
 
-    // Barcode Verification Setup
-    const barcodeInput = document.getElementById('barcode');
-    const verificationPopup = document.getElementById('verificationPopup');
-    const popupBarcode = document.getElementById('popupBarcode');
-    const popupNumber = document.getElementById('popupNumber');
-    const popupUser = document.getElementById('popupUser');
-    const closePopup = document.querySelector('.close-popup');
-    const confirmBtn = document.getElementById('confirmBtn');
-    const cancelBtn = document.getElementById('cancelBtn');
-    const currentUser = "Anis";
+        // Close modal functionality
+        setupModalClose();
 
-    if (barcodeInput) {
-        barcodeInput.focus();
-        let lastInputTime = 0;
+        // Refresh button functionality
+        setupRefreshButton();
 
-        barcodeInput.addEventListener('input', function(e) {
-            const now = new Date().getTime();
-            const timeSinceLastInput = now - lastInputTime;
+        // Initialize and update datetime every second
+        updateDateTime();
+        setInterval(updateDateTime, 1000);
+    });
 
-            if (timeSinceLastInput < 50 && this.value.length > 3) {
-                showVerificationPopup(this.value);
-                this.value = '';
-            }
-            lastInputTime = now;
+    // Set up all view buttons
+    function setupViewButtons() {
+        document.querySelectorAll('.view').forEach(button => {
+            button.addEventListener('click', function() {
+                const documentID = this.getAttribute('data-id');
+                const orderId = this.getAttribute('data-order-id');
+                const status = this.getAttribute('data-status');
+                currentOrderId = orderId;
+                showOrderDetails(documentID, orderId, status);
+            });
         });
+    }
 
-        function showVerificationPopup(barcode) {
-            const randomNumber = Math.floor(100000 + Math.random() * 900000);
-            popupBarcode.textContent = barcode;
-            popupNumber.textContent = randomNumber;
-            popupUser.textContent = currentUser;
-            verificationPopup.style.display = 'flex';
+    // Show order details in modal
+    function showOrderDetails(documentID, orderId, status) {
+        const loadingIndicator = document.createElement('div');
+        loadingIndicator.className = 'loading';
+        loadingIndicator.innerText = 'Loading...';
+        document.getElementById('productDetails').innerHTML = '';
+        document.getElementById('productDetails').appendChild(loadingIndicator);
+        document.getElementById('productModal').style.display = 'flex';
+
+        fetch(`fetchItems.php?DocumentID=${documentID}&zone=${userZone}`)
+            .then(response => response.json())
+            .then(data => {
+                loadingIndicator.style.display = 'none';
+                displayOrderData(documentID, status, data);
+                setupStatusButtons(documentID, orderId, status);
+
+                // Show timer if status is "En Cours"
+                if (status === 'En Cours') {
+                    showTimer();
+                    startTimer();
+                } else {
+                    hideTimer();
+                }
+            })
+            .catch(error => {
+                loadingIndicator.style.display = 'none';
+                console.error('Error:', error);
+                showErrorInModal('Error loading order details. Please try again.');
+            });
+    }
+
+    // Display order data in modal
+    function displayOrderData(documentID, status, data) {
+        const statusClass = status.toLowerCase().replace(/\s/g, '-');
+        let productDetails = `
+            <div class="order-header">
+                <p><strong>Document ID:</strong> ${documentID}</p>
+                <p><strong>Status:</strong>
+                    <span class="status-badge badge-${statusClass}">
+                        <i class="fas fa-${getStatusIcon(status)}"></i>
+                        ${status}
+                    </span>
+                </p>
+            </div>
+            <table class="products-table">
+                <thead>
+                    <tr><th>Product Name</th><th>Quantity</th></tr>
+                </thead>
+                <tbody>`;
+
+        if (data.success && data.products.length > 0) {
+            data.products.forEach(product => {
+                productDetails += `<tr><td>${product.name}</td><td>${product.quantity}</td></tr>`;
+            });
+        } else {
+            productDetails += `<tr><td colspan="2">${data.error || 'No products found'}</td></tr>`;
         }
 
-        closePopup.addEventListener('click', function() {
-            verificationPopup.style.display = 'none';
-            barcodeInput.focus();
-        });
+        productDetails += `</tbody></table>`;
+        document.getElementById('productDetails').innerHTML = productDetails;
+    }
 
-        confirmBtn.addEventListener('click', function() {
-            alert('Barcode verified successfully!');
-            verificationPopup.style.display = 'none';
-            barcodeInput.focus();
-        });
+    // Set up status action buttons based on current status
+    function setupStatusButtons(documentID, orderId, status) {
+        const modalActions = document.getElementById('modalActions');
+        modalActions.innerHTML = '';
 
-        cancelBtn.addEventListener('click', function() {
-            verificationPopup.style.display = 'none';
-            barcodeInput.focus();
-        });
+        // Clean up status string
+        const cleanStatus = status.trim().toLowerCase();
 
-        window.addEventListener('click', function(e) {
-            if (e.target === verificationPopup) {
-                verificationPopup.style.display = 'none';
-                barcodeInput.focus();
+        // Add action buttons based on status
+        if (cleanStatus === 'en attente' || cleanStatus.includes('attente')) {
+            // Only show buttons for "En attente" status
+            if (!cleanStatus.includes('ramassing')) {
+                addActionButton(modalActions, 'Start', 'play', () => {
+                    updateStatusAndStartTimer(documentID, 'En Cours');
+                }, 'btn-start');
+
+                addActionButton(modalActions, 'Cancel', 'times', () => {
+                    updateStatus(documentID, 'Annuler');
+                }, 'btn-cancel');
             }
+        }
+        else if (cleanStatus === 'en cours' || cleanStatus.includes('cours')) {
+            addActionButton(modalActions, 'Finish', 'flag-checkered', () => {
+                showFinishForm(documentID);
+            }, 'btn-finish');
+        }
+        else if (cleanStatus === 'terminer' || cleanStatus === 'annuler' || cleanStatus.includes('terminer') || cleanStatus.includes('annuler')) {
+            addActionButton(modalActions, 'Close', 'times', () => {
+                document.getElementById('productModal').style.display = 'none';
+            }, 'btn-close');
+        }
+        else if (cleanStatus.includes('ramassing')) {
+            // No buttons for "En attente de ramassing" status
+        }
+        else {
+            // Show debug info for unknown status
+            const debugInfo = document.createElement('div');
+            debugInfo.style.cssText = 'background: #fff3cd; padding: 10px; margin: 10px 0; border-radius: 4px; border: 1px solid #ffeaa7;';
+            debugInfo.innerHTML = `
+                <strong>Debug Info:</strong><br>
+                Raw Status: "${status}"<br>
+                Cleaned Status: "${cleanStatus}"<br>
+                Length: ${status.length}<br>
+                Please check the database status values.`;
+            modalActions.appendChild(debugInfo);
+
+            addActionButton(modalActions, 'Close', 'times', () => {
+                document.getElementById('productModal').style.display = 'none';
+            }, 'btn-close');
+        }
+    }
+
+    // Helper function to add action buttons
+    function addActionButton(container, text, icon, onClick, className = '') {
+        const button = document.createElement('button');
+        button.className = `btn btn-action ${className}`;
+        button.innerHTML = `<i class="fas fa-${icon}"></i> ${text}`;
+        button.onclick = onClick;
+        container.appendChild(button);
+    }
+
+    // Helper function to get appropriate icon for status
+    function getStatusIcon(status) {
+        switch(status.toLowerCase()) {
+            case 'terminer': return 'check-circle';
+            case 'en cours': return 'spinner';
+            case 'annuler': return 'times-circle';
+            default: return 'hourglass-start';
+        }
+    }
+
+    // Update order status and start timer
+    function updateStatusAndStartTimer(documentID, newStatus) {
+        fetch('updateStatus.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ documentID: documentID, newStatus: newStatus })
+        })
+        .then(res => res.json())
+        .then(res => {
+            if (res.success) {
+                // Update the modal content
+                showTimer();
+                startTimer();
+
+                // Remove cancel button and update buttons - only show Finish button
+                const modalActions = document.getElementById('modalActions');
+                modalActions.innerHTML = '';
+                addActionButton(modalActions, 'Finish', 'flag-checkered', () => {
+                    showFinishForm(documentID);
+                }, 'btn-finish');
+
+                // Update status display in modal
+                const statusBadge = document.querySelector('.status-badge');
+                if (statusBadge) {
+                    statusBadge.className = 'status-badge badge-en-cours';
+                    statusBadge.innerHTML = '<i class="fas fa-spinner"></i> En Cours';
+                }
+            } else {
+                alert('Error updating status: ' + (res.message || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Server error. Please try again.');
+        });
+    }
+
+    // Update order status
+    function updateStatus(documentID, newStatus) {
+        fetch('updateStatus.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ documentID: documentID, newStatus: newStatus })
+        })
+        .then(res => res.json())
+        .then(res => {
+            if (res.success) {
+                if (newStatus === 'Terminer') {
+                    alert('Task completed successfully!');
+                } else if (newStatus === 'Annuler') {
+                    alert('Task cancelled successfully!');
+                }
+                location.reload();
+            } else {
+                alert('Error updating status: ' + (res.message || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Server error. Please try again.');
+        });
+    }
+
+    // Show finish form with input for number of baskets
+    function showFinishForm(documentID) {
+        const modalActions = document.getElementById('modalActions');
+
+        // Create finish form
+        const finishForm = document.createElement('div');
+        finishForm.className = 'finish-form';
+        finishForm.innerHTML = `
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label for="numberOFPanier" style="display: block; margin-bottom: 5px; font-weight: 500;">
+                    Number of Baskets (Nombre de Paniers):
+                </label>
+                <input type="number"
+                       id="numberOFPanier"
+                       name="numberOFPanier"
+                       min="1"
+                       required
+                       style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;"
+                       placeholder="Enter number of baskets">
+            </div>`;
+
+        // Clear modal actions and add form
+        modalActions.innerHTML = '';
+        modalActions.appendChild(finishForm);
+
+        // Add finish button
+        addActionButton(modalActions, 'Complete Task', 'check', () => {
+            const numberOFPanier = document.getElementById('numberOFPanier').value;
+
+            if (!numberOFPanier || numberOFPanier < 1) {
+                alert('Please enter a valid number of baskets');
+                return;
+            }
+
+            completeTask(documentID, numberOFPanier);
+        }, 'btn-finish');
+
+        // Add cancel button
+        addActionButton(modalActions, 'Cancel', 'times', () => {
+            // Go back to just showing the finish button
+            modalActions.innerHTML = '';
+            addActionButton(modalActions, 'Finish', 'flag-checkered', () => {
+                showFinishForm(documentID);
+            }, 'btn-finish');
+        }, 'btn-cancel');
+    }
+
+    // Complete task with basket number
+    function completeTask(documentID, numberOFPanier) {
+        stopTimer();
+
+        fetch('updateStatus.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                documentID: documentID,
+                newStatus: 'En attente de ramassing',
+                numberOFPanier: parseInt(numberOFPanier),
+                nbrColier: parseInt(numberOFPanier) // nbrColier is the number user entered
+            })
+        })
+        .then(res => res.json())
+        .then(res => {
+            if (res.success) {
+                alert('Task completed successfully! Baskets: ' + numberOFPanier);
+                location.reload();
+            } else {
+                alert('Error completing task: ' + (res.message || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Server error. Please try again.');
+        });
+    }
+
+    // Timer functions
+    function showTimer() {
+        document.getElementById('timerContainer').style.display = 'block';
+    }
+
+    function hideTimer() {
+        document.getElementById('timerContainer').style.display = 'none';
+        stopTimer();
+    }
+
+    function startTimer() {
+        if (timerInterval) {
+            clearInterval(timerInterval);
+        }
+
+        startTime = new Date();
+        timerInterval = setInterval(updateTimerDisplay, 1000);
+    }
+
+    function stopTimer() {
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+        }
+    }
+
+    function updateTimerDisplay() {
+        if (!startTime) return;
+
+        const now = new Date();
+        const elapsed = now - startTime;
+
+        const hours = Math.floor(elapsed / 3600000);
+        const minutes = Math.floor((elapsed % 3600000) / 60000);
+        const seconds = Math.floor((elapsed % 60000) / 1000);
+
+        const timeString =
+            String(hours).padStart(2, '0') + ':' +
+            String(minutes).padStart(2, '0') + ':' +
+            String(seconds).padStart(2, '0');
+
+        document.getElementById('timerDisplay').textContent = timeString;
+    }
+
+    // Show error message in modal
+    function showErrorInModal(message) {
+        document.getElementById('productDetails').innerHTML = `
+            <div class="error-message">
+                ${message}
+            </div>`;
+    }
+
+    // Set up modal close functionality
+    function setupModalClose() {
+        document.querySelector('.close').addEventListener('click', function() {
+            hideTimer();
+            document.getElementById('productModal').style.display = 'none';
         });
 
-        document.addEventListener('click', function(e) {
-            if (e.target !== barcodeInput) {
-                barcodeInput.focus();
+        window.onclick = function(event) {
+            if (event.target === document.getElementById('productModal')) {
+                hideTimer();
+                document.getElementById('productModal').style.display = 'none';
+            }
+        };
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === "Escape") {
+                hideTimer();
+                document.getElementById('productModal').style.display = 'none';
             }
         });
     }
-});
 
+    // Set up refresh button
+    function setupRefreshButton() {
+        const refreshBtn = document.getElementById('refreshBtn');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', function() {
+                location.reload();
+            });
+        }
+    }
+
+    // Update current date and time
+    function updateDateTime() {
+        const now = new Date();
+        const options = {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        };
+        const dateTimeElement = document.getElementById('currentDateTime');
+        if (dateTimeElement) {
+            dateTimeElement.textContent = now.toLocaleDateString('en-US', options);
+        }
+    }
 </script>
 </body>
 </html>
