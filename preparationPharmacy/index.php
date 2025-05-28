@@ -256,7 +256,7 @@ include('../include/pgsql_connection.php');
                         <th>ID</th>
                         <th>Date</th>
                         <th>Heure Creation</th>
-                        <th>Heure Début</th>
+                        <th>Heure Debut</th>
                         <th>Statut</th>
                         <th>Actions</th>
                     </tr>
@@ -291,7 +291,7 @@ include('../include/pgsql_connection.php');
                         echo '<td><span class="status-badge badge-' . $statusSlug . '"><i class="fas fa-' . $statusIcon . '"></i> ' . ucfirst($status) . '</span></td>';
                         echo '<td>
                                 <button class="btn btn-sm btn-outline-primary me-1 view"
-                                        data-id="' . htmlspecialchars($row['documentID']) . '"
+                                        data-id="' . htmlspecialchars($row['documentid']) . '"
                                         data-order-id="' . $id . '"
                                         data-status="' . htmlspecialchars(trim($status)) . '">
                                     <i class="fas fa-eye"></i>
@@ -300,7 +300,7 @@ include('../include/pgsql_connection.php');
                         echo '</tr>';
                     }
                 } else {
-                    echo '<tr><td colspan="6" class="text-center text-muted">Aucun ordre trouvé.</td></tr>';
+                    echo '<tr><td colspan="6" class="text-center text-muted">Aucun ordre trouv�.</td></tr>';
                 }
                 ?>
                 </tbody>
