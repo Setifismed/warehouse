@@ -6,38 +6,21 @@ include('../include/pgsql_connection.php');
 session_start();
 $alert_message = '';
 $alert_type = '';
-
 if (isset($_POST['login'])) {
     $username = $_POST['username'];
-    $password = md5($_POST['password']); // Note: MD5 is not secure, consider using password_hash() in production
-    // Use parameterized query to prevent SQL injection
-    $query = "SELECT * FROM users WHERE username = $1 AND password = $2";
+    $password = md5($_POST['password']); // Still recommend changing to password_hash()
+    
+    $query = "SELECT * FROM users WHERE username = $1 AND password = $2 AND type='rammasseur'";
     $result = pg_query_params($pg_conn, $query, array($username, $password));
+    
     if ($result && pg_num_rows($result) > 0) {
         $user = pg_fetch_assoc($result);
         $_SESSION['userID'] = $user['id'];
         $_SESSION['fullname'] = $user['firstname'].' '.$user['lastname'];
         $_SESSION['username'] = $user['username'];
         $_SESSION['type'] = $user['type'];
-        // Now select the zone based on userID
-        $_SESSION['userID'] = $user['id'];
-         if ($user['type'] == 'preparationPharmacy') {
-          $zoneQuery = 'SELECT zone FROM public."zoneEmployees" WHERE userid = $1';
-          $zoneResult = pg_query_params($pg_conn, $zoneQuery, array($user['id']));
-             if ($zoneResult && pg_num_rows($zoneResult) > 0) {
-            $zoneData = pg_fetch_assoc($zoneResult);
-            $_SESSION['zone'] = $zoneData['zone']; // Store the zone in session
-            header("Location: index.php");
-            exit();
-        } else {
-            $alert_message = 'Zone not found.';
-            $alert_type = 'danger';
-        }
-
-         }
-       
-
-
+        header("Location: index.php");
+        exit();
     } else {
         $alert_message = 'Invalid username or password.';
         $alert_type = 'danger';

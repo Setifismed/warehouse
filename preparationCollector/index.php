@@ -1,16 +1,14 @@
-<?php
+﻿<?php
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 session_start();
 
 // Check if zone session variable exists, if not redirect to login
-if (!isset($_SESSION['zone'])) {
+if ($_SESSION['type'] != 'rammasseur') {
     header("Location: login.php");
     exit();
 }
-
-$zone = $_SESSION['zone'];
 include('../include/pgsql_connection.php');
 ?>
 <!DOCTYPE html>
@@ -18,215 +16,51 @@ include('../include/pgsql_connection.php');
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prepataion</title>
+    <title>Setifismed</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="dashboard.css">
-    <style>
-        /* General Button Base Style */
-        .btn,
-        .btn-outline,
-        .btn-action {
-            font-family: 'Inter', sans-serif;
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            border: none;
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        /* Default Button */
-        .btn {
-            background-color: #4CAF50;
-            color: white;
-        }
-
-        .btn:hover {
-            background-color: #45a049;
-        }
-
-        /* Outline Button */
-        .btn-outline {
-            background-color: transparent;
-            color: #4CAF50;
-            border: 2px solid #4CAF50;
-        }
-
-        .btn-outline:hover {
-            background-color: #4CAF50;
-            color: white;
-        }
-
-        /* Action Buttons */
-        .btn-action {
-            background-color: #3498db;
-            color: white;
-            padding: 6px 12px;
-            font-size: 0.875rem;
-            border-radius: 6px;
-        }
-
-        .btn-action:hover {
-            background-color: #2980b9;
-        }
-
-        /* Modal Styles */
-        .modal {
-            display: none; 
-            position: fixed; 
-            z-index: 1000; 
-            left: 0;
-            top: 0;
-            width: 100%; 
-            height: 100%; 
-            overflow: auto; 
-            background-color: rgba(0, 0, 0, 0.5);
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal-content {
-            background-color: #fefefe;
-            margin: auto;
-            padding: 20px;
-            border: 1px solid #888;
-            border-radius: 8px;
-            width: 80%; 
-            max-width: 500px; 
-        }
-
-        .close {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .close:hover {
-            color: black;
-        }
-
-        .loading {
-            display: none; 
-            text-align: center; 
-            font-size: 1.2rem; 
-            margin-top: 20px;
-        }
-
-        /* Table Styles */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
-
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-
-        th {
-            background-color: #f2f2f2;
-        }
-
-        .status-badge {
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.875rem;
-            font-weight: 500;
-        }
-
-        .badge-terminer {
-            background-color: #d4edda;
-            color: #155724;
-        }
-
-        .badge-en cours {
-            background-color: #fff3cd;
-            color: #856404;
-        }
-
-        .badge-en attente {
-            background-color: #cce5ff;
-            color: #004085;
-        }
-        .modal-actions {
-    margin-top: 20px;
-    display: flex;
-    gap: 10px;
-    justify-content: flex-end;
-}
-
-.modal-actions button {
-    padding: 8px 16px;
-    border-radius: 4px;
-    border: none;
-    cursor: pointer;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.modal-actions .btn-start {
-    background-color: #4CAF50;
-    color: white;
-}
-
-.modal-actions .btn-start:hover {
-    background-color: #45a049;
-}
-
-.modal-actions .btn-finish {
-    background-color: #2196F3;
-    color: white;
-}
-
-.modal-actions .btn-finish:hover {
-    background-color: #0b7dda;
-}
-    </style>
-    <script>
-        const userZone = "<?php echo htmlspecialchars($zone); ?>";
-    </script>
+     <link rel="stylesheet" href="styles/css/style.css" type="text/css">
 </head>
 <body>
 <div class="container">
-    <?php include("sidemenu.php"); ?>
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <i class="fas fa-clipboard-list logo-icon"></i>
+                <h1>Setifismed</h1>
+            </div>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="dashboard-pharmacy.html" class="active"><i class="fas fa-home"></i> Dashboard</a></li>
+            <li><a href="inventaire-pharmacy.html"><i class="fas fa-tasks"></i> Inventaire</a></li>
+            <li><a href="en_attente.html"><i class="fas fa-clock"></i> En Attente</a></li>
+            <li><a href="en_cours.html"><i class="fas fa-spinner"></i> En Cours</a></li>
+            <li><a href="terminer.html"><i class="fas fa-check-circle"></i> Terminer</a></li>
+        </ul>
+    </nav>
 
     <main class="main-content">
         <header>
             <div class="logo">
-                <div class="logo-icon">
-                    <i class="fas fa-tasks"></i>
-                </div>
+                <i class="fas fa-tasks"></i>
                 <h1>Dashboard</h1>
             </div>
             <div class="header-right">
+                <div class="datetime-container" id="currentDateTime"></div>
+                <button class="btn" id="refreshBtn"><i class="fas fa-sync-alt"></i> Refresh</button>
                 <div class="user-profile">
-                    <div class="user-avatar"><?php echo htmlspecialchars($_SESSION['fullname']); ?></div>
-                    <div>
-                        <div class="user-name"><?php echo htmlspecialchars($_SESSION['fullname']); ?></div>
-                        <div class="user-role"><?php echo htmlspecialchars($_SESSION['zone']); ?></div>
-                    </div>
+                    <div><div class="user-name"><?php echo($_SESSION['fullname'])?></div></div>
                 </div>
             </div>
         </header>
 
-       <div class="status-cards">
+        <div class="status-cards">
             <div class="status-card status-pending">
-                <h3><i class="fas fa-hourglass-start"></i> En Attente</h3>
+                <h3><i class="fas fa-clock"></i> En Attente</h3>
                 <div class="count">24</div>
             </div>
             <div class="status-card status-inprogress">
-                <h3><i class="fas fa-spinner fa-spin"></i> En Cours</h3>
+                <h3><i class="fas fa-spinner"></i> En Cours</h3>
                 <div class="count">12</div>
             </div>
             <div class="status-card status-completed">
@@ -241,166 +75,246 @@ include('../include/pgsql_connection.php');
 
         <div class="input-section">
             <h2><i class="fas fa-barcode"></i> Task Scanner</h2>
-            <div class="input-group">
-                <div class="input-field">
-                    <input type="text" id="barcode" placeholder=" " autocomplete="off">
-                    <label for="barcode">Scan Barcode</label>
+            <div class="input-field">
+                <input type="text" id="barcode" placeholder=" " autocomplete="off" autofocus>
+                <label for="barcode">Scan Barcode</label>
+            </div>
+        </div>
+
+        <div id="verificationPopup" class="popup">
+            <div class="popup-content">
+                <span class="close-popup">&times;</span>
+                <h3>Verify Barcode Scan</h3>
+                <div class="verification-details">
+                    <p><strong>Barcode:</strong> <span id="popupBarcode"></span></p>
+                    <p><strong>Number:</strong> <span id="popupNumber"></span></p>
+                    <p><strong>User:</strong> <span id="popupUser"></span></p>
+                    <p><strong>Items in Basket:</strong> <span id="popupBasketCount">0</span></p>
+                </div>
+                <div class="popup-buttons">
+                    <button id="confirmBtn" class="btn confirm">Confirm</button>
+                    <button id="cancelBtn" class="btn cancel">Cancel</button>
                 </div>
             </div>
         </div>
+        <div class="table-container">
+    <table id="mainTable">
+        <thead>
+            <tr>
+                <th>N°</th>
+                <th>Date</th>
+                <th>Heure Création</th>
+                <th>Heure Début</th>
+                <th>État</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+        <?php
+        $today = date('Y-m-d');
+        $query = 'SELECT * FROM public."ordersCollectors" WHERE rammaseur=$1 AND date=$2 ORDER BY id ASC';
+        $result = pg_query_params($pg_conn, $query, array($_SESSION['fullname'], $today));
+        if ($result && pg_num_rows($result) > 0) {
+            while ($row = pg_fetch_assoc($result)) {
+                $id = htmlspecialchars($row['id']);
+                $date = htmlspecialchars($row['date']);
+                $heurCreation = htmlspecialchars($row['heurCreation']);
+                $heurFin = $row['heurFin'] ? htmlspecialchars($row['heurFin']) : '-';
+                $status = htmlspecialchars(trim($row['status']));
+                $statusSlug = strtolower(str_replace(' ', '', $status));
+                $statusIcon = 'clock';
 
-        <div class="table-responsive">
-            <table class="table table-hover mb-0">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Date</th>
-                        <th>Heure Creation</th>
-                        <th>Heure D�but</th>
-                        <th>Statut</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                <?php
-                
-                $query = 'SELECT * FROM public."ordersPharmacy" WHERE zone=$1 ORDER BY id ASC';
-                $result = pg_query_params($pg_conn, $query, array($zone));
-
-                if ($result && pg_num_rows($result) > 0) {
-                    while ($row = pg_fetch_assoc($result)) {
-                        $id = htmlspecialchars($row['id']);
-                        $date = htmlspecialchars($row['date']);
-                        $heurCreation = htmlspecialchars($row['heurCreation']);
-                        $heurFin = htmlspecialchars($row['heurFin']);
-                        $status = htmlspecialchars($row['status']);
-                        $statusSlug = strtolower(str_replace(' ', '-', $status));
-                        $statusIcon = 'hourglass-start';
-
-                        if ($status === 'Terminer') {
-                            $statusIcon = 'check-circle';
-                        } elseif ($status === 'En Cours') {
-                            $statusIcon = 'spinner fa-spin';
-                        }
-
-                        echo '<tr>';
-                        echo '<td class="fw-semibold text-primary">#' . $id . '</td>';
-                        echo '<td>' . $date . '</td>';
-                        echo '<td>' . $heurCreation . '</td>';
-                        echo '<td>' . $heurFin . '</td>';
-                        echo '<td><span class="status-badge badge-' . $statusSlug . '"><i class="fas fa-' . $statusIcon . '"></i> ' . ucfirst($status) . '</span></td>';
-                        echo '<td>
-                                <button class="btn btn-sm btn-outline-primary me-1 view"
-                                        data-id="' . htmlspecialchars($row['documentID']) . '"
-                                        data-order-id="' . $id . '"
-                                        data-status="' . htmlspecialchars(trim($status)) . '">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                              </td>';
-                        echo '</tr>';
-                    }
-                } else {
-                    echo '<tr><td colspan="6" class="text-center text-muted">Aucun ordre trouv�.</td></tr>';
+                switch (strtolower($status)) {
+                    case 'terminé':
+                    case 'terminer':
+                        $statusIcon = 'check-circle';
+                        $statusSlug = 'completed';
+                        break;
+                    case 'en cours':
+                        $statusIcon = 'spinner fa-pulse';
+                        $statusSlug = 'inprogress';
+                        break;
+                    case 'en attente':
+                        $statusIcon = 'clock';
+                        $statusSlug = 'pending';
+                        break;
+                    case 'annulé':
+                        $statusIcon = 'times-circle';
+                        $statusSlug = 'cancelled';
+                        break;
                 }
-                ?>
-                </tbody>
-            </table>
-        </div>
-    </main>
 
-    <!-- Modal for Product Details -->
-    <div id="productModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Order Details</h2>
-            <div id="productDetails"></div>
-            <div id="timerContainer" class="timer-container" style="display: none;">
-                <div class="timer-label">Task Duration</div>
-                <div id="timerDisplay" class="timer-display">00:00:00</div>
-            </div>
-            <div id="modalActions" class="modal-actions"></div>
+                echo '<tr>';
+                echo '<td>#' . $id . '</td>';
+                echo '<td>' . $date . '</td>';
+                echo '<td>' . $heurCreation . '</td>';
+                echo '<td>' . $heurFin . '</td>';
+                echo '<td><span class="status-badge badge-' . $statusSlug . '"><i class="fas fa-' . $statusIcon . '"></i> ' . ucfirst($status) . '</span></td>';
+                echo '<td>
+                        <button class="btn btn-sm btn-outline-primary me-1 view"
+                                data-id="' . htmlspecialchars($row['documentID']) . '"
+                                data-order-id="' . $id . '"
+                                data-status="' . $status . '">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                      </td>';
+                echo '</tr>';
+            }
+        } else {
+            echo '<tr><td colspan="6" class="text-center text-muted">Aucun ordre trouvé pour aujourd\'hui.</td></tr>';
+        }
+        ?>
+        </tbody>
+    </table>
+</div>
+
+<!-- Modal for zones -->
+<div id="detailsModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Détails de la commande #<span id="orderNumber"></span></h2>
+            <button class="close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <h3 class="section-title">Zones</h3>
+            <div class="zones-container" id="zonesContainer"></div>
         </div>
     </div>
 </div>
 
 <script>
-  let timerInterval = null;
-let startTime = null;
-let currentOrderId = null;
+const modal = document.getElementById('detailsModal');
+const closeModalButton = modal.querySelector('.close');
+const zonesContainer = document.getElementById('zonesContainer');
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Order Management Setup
-    setupViewButtons();
-    setupModalClose();
-    setupRefreshButton();
-    updateDateTime();
-    setInterval(updateDateTime, 1000);
+let pollingInterval;
+let currentDocumentID = null;
 
-    // Barcode Verification Setup
-    const barcodeInput = document.getElementById('barcode');
-    const verificationPopup = document.getElementById('verificationPopup');
-    const popupBarcode = document.getElementById('popupBarcode');
-    const popupNumber = document.getElementById('popupNumber');
-    const popupUser = document.getElementById('popupUser');
-    const closePopup = document.querySelector('.close-popup');
-    const confirmBtn = document.getElementById('confirmBtn');
-    const cancelBtn = document.getElementById('cancelBtn');
-    const currentUser = "Anis";
+function fetchAndUpdateZones(documentID) {
+    fetch(`getZones.php?documentID=${documentID}`)
+        .then(res => res.json())
+        .then(data => {
+            const zones = ['A', 'B', 'C', 'D', 'E', 'F', 'L', 'P', 'K', 'J', 'I', 'H', 'G'];
+            zonesContainer.innerHTML = '';
 
-    if (barcodeInput) {
-        barcodeInput.focus();
-        let lastInputTime = 0;
+            let allValid = true;
+            let hasBasket = false;
 
-        barcodeInput.addEventListener('input', function(e) {
-            const now = new Date().getTime();
-            const timeSinceLastInput = now - lastInputTime;
+            zones.forEach(zone => {
+                const zoneInfo = data.find(item => item.zone === zone);
+                const basketNum = zoneInfo ? zoneInfo.basketnum : 0;
+                const status = zoneInfo ? zoneInfo.status : null;
 
-            if (timeSinceLastInput < 50 && this.value.length > 3) {
-                showVerificationPopup(this.value);
-                this.value = '';
+                const zoneCard = document.createElement('div');
+                zoneCard.classList.add('zone-card');
+                zoneCard.style.color = 'white';
+                zoneCard.style.padding = '10px';
+                zoneCard.style.margin = '5px';
+                zoneCard.style.borderRadius = '5px';
+                zoneCard.style.display = 'inline-block';
+                zoneCard.style.minWidth = '60px';
+                zoneCard.style.textAlign = 'center';
+
+                if (basketNum > 0) {
+                    hasBasket = true;
+
+                    if (status && status.toLowerCase() === 'valide') {
+                        zoneCard.style.backgroundColor = 'green';
+                    } else if (
+                        status &&
+                        status.toLowerCase().includes('attente') &&
+                        status.toLowerCase().includes('ramass')
+                    ) {
+                        zoneCard.style.backgroundColor = 'blue';
+                        allValid = false;
+                    } else {
+                        zoneCard.style.backgroundColor = 'gray';
+                        allValid = false;
+                    }
+                } else {
+                    zoneCard.style.backgroundColor = 'gray';
+                }
+
+                zoneCard.innerHTML = `
+                    <strong>${zone}</strong><br>
+                    Paniers: ${basketNum}<br>
+                    }
+                `;
+                zonesContainer.appendChild(zoneCard);
+            });
+
+            // Handle Print button logic
+            let printBtn = document.getElementById('printBtn');
+            if (!printBtn) {
+                printBtn = document.createElement('button');
+                printBtn.id = 'printBtn';
+                printBtn.className = 'btn confirm';
+                printBtn.textContent = 'Imprimer';
+                printBtn.style.marginTop = '20px';
+                printBtn.addEventListener('click', () => {
+                    window.print(); // Replace with custom print logic if needed
+                });
+                zonesContainer.appendChild(printBtn);
             }
-            lastInputTime = now;
-        });
 
-        function showVerificationPopup(barcode) {
-            const randomNumber = Math.floor(100000 + Math.random() * 900000);
-            popupBarcode.textContent = barcode;
-            popupNumber.textContent = randomNumber;
-            popupUser.textContent = currentUser;
-            verificationPopup.style.display = 'flex';
-        }
+            // Show only if all non-zero zones are "valide"
+            printBtn.style.display = (hasBasket && allValid) ? 'inline-block' : 'none';
+        })
+        .catch(error => console.error('Erreur de récupération des zones :', error));
+}
 
-        closePopup.addEventListener('click', function() {
-            verificationPopup.style.display = 'none';
-            barcodeInput.focus();
-        });
 
-        confirmBtn.addEventListener('click', function() {
-            alert('Barcode verified successfully!');
-            verificationPopup.style.display = 'none';
-            barcodeInput.focus();
-        });
 
-        cancelBtn.addEventListener('click', function() {
-            verificationPopup.style.display = 'none';
-            barcodeInput.focus();
-        });
+function openModal(documentID) {
+    currentDocumentID = documentID;
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    fetchAndUpdateZones(documentID);
+    pollingInterval = setInterval(() => {
+        fetchAndUpdateZones(documentID);
+    }, 5000);
+}
 
-        window.addEventListener('click', function(e) {
-            if (e.target === verificationPopup) {
-                verificationPopup.style.display = 'none';
-                barcodeInput.focus();
-            }
-        });
+function closeModal() {
+    modal.classList.remove('active');
+    document.querySelector('.selected-row')?.classList.remove('selected-row');
+    document.body.style.overflow = 'auto';
+    clearInterval(pollingInterval);
+    pollingInterval = null;
+}
 
-        document.addEventListener('click', function(e) {
-            if (e.target !== barcodeInput) {
-                barcodeInput.focus();
-            }
-        });
-    }
+closeModalButton.addEventListener('click', closeModal);
+
+document.querySelectorAll('.view').forEach(button => {
+    button.addEventListener('click', function () {
+        const documentID = this.getAttribute('data-id');
+        const status = this.getAttribute('data-status');
+        const orderID = this.getAttribute('data-order-id');
+        const row = this.closest('tr');
+        
+        // Console log the document details
+        console.log('Clicked Order Details:', {documentID: documentID,orderID: orderID,status: status});
+
+        if (status.toLowerCase() === 'en attente') {
+            row.classList.add('selected-row');
+            openModal(documentID);
+            updateStatus(documentID, 'En cours');
+        } 
+    });
 });
 
+function updateStatus(documentID, newStatus) {
+    fetch('updateStatus.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ documentID, newStatus }),
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Status update failed');
+        console.log('Status updated to', newStatus);
+    })
+    .catch(error => console.error('Erreur de mise à jour du statut :', error));
+}
 </script>
 </body>
 </html>
