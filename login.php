@@ -1,44 +1,26 @@
-<?php
-include('include/pgsql_connection.php');
+﻿<?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+include('../include/pgsql_connection.php');
 session_start();
 $alert_message = '';
 $alert_type = '';
 if (isset($_POST['login'])) {
     $username = $_POST['username'];
-    $password = md5($_POST['password']); // Note: MD5 is not secure, consider using password_hash() in production
-    // Use parameterized query to prevent SQL injection
-    $query = "SELECT * FROM users WHERE username = $1 AND password = $2";
+    $password = md5($_POST['password']); // Still recommend changing to password_hash()
+    
+    $query = "SELECT * FROM users WHERE username = $1 AND password = $2 AND type='rammasseur'";
     $result = pg_query_params($pg_conn, $query, array($username, $password));
+    
     if ($result && pg_num_rows($result) > 0) {
         $user = pg_fetch_assoc($result);
         $_SESSION['userID'] = $user['id'];
-        $_SESSION['fullname'] = $user['fullname'];
+        $_SESSION['fullname'] = $user['firstname'].' '.$user['lastname'];
         $_SESSION['username'] = $user['username'];
         $_SESSION['type'] = $user['type'];
-        // Redirect based on user type
-        switch($_SESSION['type']){
-            case 'warHouseManager':
-                header("Location: warHouseManager/dashboard.php");
-                exit();
-            case 'warHouseWorker':
-                header("Location: mainWarHouseWorkerDashboard.php");
-                exit();
-            case 'preparationManager':
-                header("Location: preparationManagerDashboard.php");
-                exit();
-            case 'preparationPharmacy':
-                header("Location: preparationPharmacyDashboard.php");
-                exit();
-            case 'preparationCollector':
-                header("Location: preparationCollectorDashboard.php");
-                exit();
-            case 'expeditionManager':
-                header("Location: expeditionManagerDashboard.php");
-                exit();
-            case 'expeditionWorker':
-                header("Location: expeditionWorkerDashboard.php");
-                exit();
-        }
+        header("Location: index.php");
+        exit();
     } else {
         $alert_message = 'Invalid username or password.';
         $alert_type = 'danger';
